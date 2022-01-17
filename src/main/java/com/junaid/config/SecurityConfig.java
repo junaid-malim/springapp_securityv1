@@ -9,6 +9,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 
 @Configuration
 @EnableWebSecurity
@@ -24,19 +25,24 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
 		auth.inMemoryAuthentication()
 				.withUser("lol1")
-				.password(passwordEncoder().encode("lol"))
+				.password(passwordEncoder().encode("lol1"))
 				.roles("ADMIN");
 
 	}
 
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
-		http.csrf().disable();
-		http.authorizeRequests()
-			.anyRequest()
-			.authenticated()
-			.and()
-			.httpBasic();
+		http.csrf().csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+				.and()
+				.authorizeRequests()
+				.antMatchers("/signin").permitAll()
+				.antMatchers("/tasks").hasRole("ADMIN")
+				.anyRequest()
+				.authenticated()
+				.and()
+				.formLogin().loginPage("/signin")
+				.loginProcessingUrl("/doLogin")
+				.defaultSuccessUrl("/tasks");
 	}
 
 	@Bean
